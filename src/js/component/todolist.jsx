@@ -1,128 +1,200 @@
-import { element, func } from 'prop-types';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+
+const TodoList = () => {
+    const host = "https://playground.4geeks.com/todo";
+    const user = "CarlesViolan";
+
+    const [tasks, setTasks] = useState([]);
+    const [newTask, setnewTask] = useState("");
+    const [taskEdit, settaskEdit] = useState("");
 
 
+    // Create User Function (POST)
+    async function createUser() {
+        try {
+            const response = await fetch(`${host}/users/${user}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            if (!response.ok) {
+                throw new Error("Create User Error");
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
-const ToDoList = () => {
-  const [items, setItems] = useState([]);
-  const [currentItem, setCurrentItem] = useState('');
-  const [followers, setfollowers]= useState(0);
+    // Gettask function (GET)
+    async function getTasks() {
+        const uri = `${host}/users/${user}`
+        const options = { method: "GET" }
+        const response = await fetch(uri, options);
+        if (!response.ok) {
+            console.log("Error", response.status, response.statusText);
+        };
+        const data = await response.json();
+        setTasks(data.todos);
 
-  const [characters, setCharacters] = useState([]);
-  
-
-
-//funcion nueva followers
-function handleFollowClick(){
-  setfollowers(followers +1);
-}
-
-//funcion Fetch
-function getCharacters(){
-
-  const protocolo = "https";
-  const baseURI = "rickandmortyapi.com"
-  const ruta = "/api/character"
-  const method = "GET"
-  const URI = `${protocolo}://${baseURI}${ruta}`
-  const opciones = { 
-    method,
-      // body: {nombre:"Carles_V"}, 
-      //  headers: {
-      //  "Content-Type": "application/json"}
-     }
-     
-
-  const promesasPersonajes = fetch(URI , opciones);
-
-  promesasPersonajes
-    .then((response) => {
-      console.log("----response: ", response);
-    return response.json();
-   
-    })
-    .then((data) => {
-      console.log("----data: ", data);    
-      //return data.results;  
-      return data; 
-    })
-    .catch((error) => {
-        console.log("---Oh no! There was a problem: \n",error);
-      })
-
-  };
-
-//cogemos el valor del del current item
-  const handleInput = e => {
-    setCurrentItem(e.target.value);
-  };
-
-  const addItem = e => {
-    if (e.key === 'Enter' && currentItem !== '') {
-//spread operator ...
-      setItems([...items, currentItem]);
-      setCurrentItem('');
-      console.log(items);
     };
 
-  };
+    // Create Task function (POST)
+    async function createTasks() {
+        const uri = `${host}/todos/${user}`
+        const todo = { label: newTask, is_done: false };
+        const options = {
+            method: "POST",
+            headers: { "Content-type": "application/json" },
+            body: JSON.stringify(todo)
+        };
+        const response = await fetch(uri, options);
+        if (!response.ok) {
+            console.log("Errrrrrrror", response.status, response.statusText);
+        };
 
-  function eliminarElemento(value){
-    const result = items.filter((element,index) => index !== value);
-    //setItems(result);
-  }
+        setnewTask("");
+        getTasks();
+    };
 
-  let numberItems = items.length;
+    // update function
+    async function editTask(item) {
 
-  //let characters= [];
-//funcion que se ejecuta cuando cargue la página
-    useEffect(() => {
-      getCharacters(() => {
-        //let datos = getCharacters();
-        console.log("------characters; ", data);          
-        setCharacters(data);
-        //characters = data;
-      });
-    
+        settaskEdit(item);
+        setnewTask(item.label);
+        enableButtonUpdate();
+        disableButtonCreate();
+    };
 
-    }, []);
-  
-    
-  return (
-    <div>
-      <div className='container'>
-        <h1 className='title'>ToDoList</h1>     
-          <div className="input-group mb-3">
-              <span className="input-group-text" id="inputGroup-sizing-default">Items</span>
-              <input type="text"  value={currentItem} onChange={handleInput} onKeyPress={addItem} className="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default"/>
-          </div>      
-      <ul className="list-group">
-        {items.map((item, index) => (                             
-             <li key={index} className="list-group-item">{item}<span className="badge" onClick={() => eliminarElemento(index)}>X</span></li>
-        ))}
-      </ul>
-      <div className='countItems'>{numberItems}   item left</div><br></br>
-      <button type='button' className='btn btn-primary' onClick={handleFollowClick}>followers</button>
-      <div>{followers}</div>          
-      <div className='container text-center mt-5' >
-      <div className='row'>
-            {characters.map((character, index) => {
-                <div key={index} className="col-4 p-2">
-                  <div className='p-3 bg-info border border-secondary'>
-                    {character.name}
-                  </div>
-            
-                </div>
-              }) 
+    // Función método PUT
+    async function actualizartasks(item) {
+        const uri = `${host}/todos/${item.id}`
+        const updateTodo = { ...item, label: newTask };
+        const options = {
+            method: "PUT",
+            headers: { "Content-type": "application/json" },
+            body: JSON.stringify(updateTodo)
+        };
+        const response = await fetch(uri, options);
+        if (!response.ok) {
+            console.log("Erroooorror", response.status, response.statusText);
+        };
+        setnewTask("");
+        getTasks();
+        window.location.reload();
+    };
+
+    // remove task each function (DELETE)
+    async function deletetasks(item) {
+        const uri = `${host}/todos/${item.id}`
+        const options = {
+            method: "DELETE",
+        };
+        const response = await fetch(uri, options);
+        if (!response.ok) {
+            console.log("Errrror", response.status, response.statusText);
+        };
+        getTasks();
+    };
+    // // remove all tasks function (DELETE)
+    async function deleteAlltasks() {
+        const uri = `${host}/users/${user}`
+        const options = {
+            method: "DELETE",
+        };
+        const response = await fetch(uri, options);
+        if (!response.ok) {
+            console.log("Errrrrror", response.status, response.statusText);
+        };
+        getTasks();
+    };
+
+// functions to enable and disable buttons
+    async function disableButtonUpdate(){
+    const myElement = document.getElementById("updateButton");
+        myElement.style.display = "none";
+    }
+    async function enableButtonUpdate(){
+        const myElement = document.getElementById("updateButton");
+            myElement.style.display = "block";
+        }
+    async function disableButtonCreate(){
+            const myElement = document.getElementById("createButton");
+                myElement.style.display = "none";
             }
-              
-      </div>
-         </div>
-    </div>
-    </div>
-  )
-    
-  };
+    async function enableButtonCreate(){
+                const myElement = document.getElementById("createButton");
+                    myElement.style.display = "block";
+                }
 
-    
-export default ToDoList;
+    useEffect(() => {
+        disableButtonUpdate();
+        createUser();
+        getTasks();
+    }, []);
+
+    return (
+        <div className="container">
+            <div className="row">
+             <div className="col-12">
+                    <h1 className="title">ToDoListReactFetch</h1>
+      
+             </div>
+            <div className="row">
+             <div className="col-12">
+                            <input
+                                className="form-control rounded-0 border-bottom-0 fs-2 ps-5"
+                                type="text"
+                                value={newTask}
+                                onChange={(evento) => setnewTask(evento.target.value)}
+                                placeholder="Create a Task"
+                            />
+                            <div className="d-flex justify-content-center text-center m-3 rounded-0">
+
+                                <button id="createButton" className="btn btn-info createTask" onClick={() => createTasks()} >
+                                    {"Create Task"}
+                                </button>
+                                <button id="updateButton" className="btn btn-info actualizarTask" onClick={() => actualizartasks(taskEdit)} >
+                                    {"Update Task"}
+                                </button>
+                            </div>
+                     </div>
+                 </div>
+                 <div className="row">
+                            <div className="col-12">
+                            {tasks.map((item) =>
+                                <ul className="list-group rounded-0" style={{ listStyle: "none" }}>
+                                    <li className="list-group-item d-flex justify-content-between align-items-center fs-3 ps-5 rounded-0">{item.label}
+                                        <span
+                                            className="edit-btn btn btn-sm fs-3"
+                                            onClick={() => editTask(item)
+
+                                            }
+                                        >
+                                            Edit
+                                        </span>
+                                        <span
+                                            className="delete-btn btn btn-sm fs-3"
+                                            onClick={() => deletetasks(item)}
+                                        >
+                                            X
+                                        </span>
+                                    </li>
+                                </ul>
+                            )}
+                  
+                        </div>
+                    </div>
+                    <div className="container">
+                        <div className="row">
+                            <div className="d-flex justify-content-end text-center rounded-0">
+                                <button className="btn btn-danger col-12" onClick={() => { deleteAlltasks() }}>Remove List</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+       
+    );
+};
+export default TodoList;
