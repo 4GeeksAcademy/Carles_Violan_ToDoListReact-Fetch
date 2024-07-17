@@ -96,7 +96,7 @@ const TodoList = () => {
         };
         getTasks();
     };
-    // // remove all tasks function (DELETE)
+
     async function deleteAlltasks() {
         const uri = `${host}/users/${user}`
         const options = {
@@ -104,9 +104,10 @@ const TodoList = () => {
         };
         const response = await fetch(uri, options);
         if (!response.ok) {
-            console.log("Errrrrror", response.status, response.statusText);
+            console.log("Erroorrrrrrrr", response.status, response.statusText);
         };
         getTasks();
+        window.location.reload();
     };
 
 // functions to enable and disable buttons
@@ -189,7 +190,13 @@ const TodoList = () => {
                         <div className="row">
                             <div className="d-flex justify-content-end text-center rounded-0">
                                 <button className="btn btn-danger col-12" onClick={() => { deleteAlltasks() }}>Remove List</button>
-                            </div>
+                            </div>  
+                            <p></p>
+                            <div className="d-flex justify-content-end text-center">
+                                <button className="panel-heading col-12">The List content is {tasks.length}</button>
+                            </div> 
+                            
+                                             
                         </div>
                     </div>
                 </div>
